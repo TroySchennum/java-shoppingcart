@@ -2,12 +2,15 @@ package com.lambdaschool.shoppingcart.services;
 
 import com.lambdaschool.shoppingcart.exceptions.ResourceFoundException;
 import com.lambdaschool.shoppingcart.exceptions.ResourceNotFoundException;
+import com.lambdaschool.shoppingcart.models.Role;
 import com.lambdaschool.shoppingcart.models.User;
+import com.lambdaschool.shoppingcart.models.UserRoles;
 import com.lambdaschool.shoppingcart.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +24,9 @@ public class UserServiceImpl
      */
     @Autowired
     private UserRepository userrepos;
+
+    @Autowired
+    private RoleService roleService;
 
     @Autowired
     private CartService cartService;
@@ -62,7 +68,18 @@ public class UserServiceImpl
         User newUser = new User();
 
         newUser.setUsername(user.getUsername());
+        newUser.setPasswordNoEncrypt(user.getPassword());
         newUser.setComments(user.getComments());
+        newUser.getRoles()
+                .clear();
+        for (UserRoles ur : user.getRoles())
+        {
+            Role addRole = roleService.findRoleById(ur.getRole()
+                    .getRoleid());
+
+            newUser.getRoles()
+                    .add(new UserRoles(newUser, addRole));
+        }
 
         if (user.getCarts()
                 .size() > 0)
@@ -70,5 +87,16 @@ public class UserServiceImpl
             throw new ResourceFoundException("Carts are not added through users");
         }
         return userrepos.save(newUser);
+    }
+
+    @Override
+    public User findByName(String name)
+    {
+        User uu = userrepos.findByUsername(name.toLowerCase());
+        if (uu == null)
+        {
+            throw new EntityNotFoundException("User name " + name + " not found!");
+        }
+        return uu;
     }
 }

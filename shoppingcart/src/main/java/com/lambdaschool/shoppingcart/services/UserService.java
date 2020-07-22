@@ -31,6 +31,8 @@ public interface UserService
      */
     void delete(long id);
 
+    User findByName(String name);
+
     /**
      * Given a complete user object, saves that user object in the database.
      * If a primary key is provided, the record is completely replaced
